@@ -7,6 +7,40 @@ use 3enRaya;
 # (3 puntos)
 # Generar una funcion que consultando las casillas marcadas de la tabla TABLERO averigüe si el tablero de la partida especificada como parametro tiene ganador (hay un tres en raya) y por tanto retorna 'GANADOR JUGADOR1' (si son tres 'X'), o 'GANADOR JUGADOR2' (si son tres 'O'), o retorna 'FALSO' en caso contrario.
 #
+DROP FUNCTION IF EXISTS tablero_ganador;
+DELIMITER //
+CREATE FUNCTION tablero_ganador(idPartidaP INT) RETURNS VARCHAR(50)
+BEGIN
+
+    DECLARE COL_A, COL_B, COL_C CHAR(1);
+    DECLARE POS_1, POS_2, POS_3 CHAR(1);
+    DECLARE CONTADOR INT;
+    DECLARE RESULTAT VARCHAR(50);
+
+    SET CONTADOR = 1;
+    SET RESULTAT = 'FALSO';
+
+    # Horizontal
+    WHILE CONTADOR <= 3 DO
+
+        SELECT columnaA INTO COL_A FROM TABLERO WHERE idPartida = idPartidaP AND fila = CONTADOR;
+        SELECT columnaB INTO COL_B FROM TABLERO WHERE idPartida = idPartidaP AND fila = CONTADOR;
+        SELECT columnaC INTO COL_C FROM TABLERO WHERE idPartida = idPartidaP AND fila = CONTADOR;
+
+        IF COL_A = 'X' AND COL_B = 'X' AND COL_C = 'X' THEN
+            SET RESULTAT = 'GANADOR JUGADOR1';
+        ELSEIF COL_A = 'O' AND COL_B = 'O' AND COL_C = 'O' THEN
+            SET RESULTAT = 'GANADOR JUGADOR2';
+        END IF;
+
+        SET CONTADOR = CONTADOR + 1;
+
+    END WHILE;
+    
+    RETURN RESULTAT;
+
+END//
+DELIMITER ;
 
 # TEST tablero_ganador
 call mostrar_tablero(1);

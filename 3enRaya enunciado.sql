@@ -12,8 +12,7 @@ DELIMITER //
 CREATE FUNCTION tablero_ganador(idPartidaP INT) RETURNS VARCHAR(50)
 BEGIN
 
-    DECLARE COL_A, COL_B, COL_C CHAR(1);
-    DECLARE POS_1, POS_2, POS_3 CHAR(1);
+    DECLARE POS_1, POS_2, POS_3, POS_4, POS_5, POS_6, POS_7, POS_8, POS_9 CHAR(1);
     DECLARE CONTADOR INT;
     DECLARE RESULTAT VARCHAR(50);
 
@@ -23,20 +22,36 @@ BEGIN
     # Horizontal
     WHILE CONTADOR <= 3 DO
 
-        SELECT columnaA INTO COL_A FROM TABLERO WHERE idPartida = idPartidaP AND fila = CONTADOR;
-        SELECT columnaB INTO COL_B FROM TABLERO WHERE idPartida = idPartidaP AND fila = CONTADOR;
-        SELECT columnaC INTO COL_C FROM TABLERO WHERE idPartida = idPartidaP AND fila = CONTADOR;
+        SELECT columnaA, columnaB, columnaC INTO POS_1, POS_2, POS_3 FROM TABLERO WHERE idPartida = idPartidaP AND fila = CONTADOR;
 
-        IF COL_A = 'X' AND COL_B = 'X' AND COL_C = 'X' THEN
+        IF CONCAT(POS_1, POS_2, POS_3) = 'XXX' THEN
             SET RESULTAT = 'GANADOR JUGADOR1';
-        ELSEIF COL_A = 'O' AND COL_B = 'O' AND COL_C = 'O' THEN
+        ELSEIF CONCAT(POS_1, POS_2, POS_3) = 'OOO' THEN
             SET RESULTAT = 'GANADOR JUGADOR2';
         END IF;
 
         SET CONTADOR = CONTADOR + 1;
 
     END WHILE;
-    
+
+    # Veritcal
+    SELECT columnaA, columnaB, columnaC INTO POS_1, POS_2, POS_3 FROM TABLERO WHERE idPartida = idPartidaP AND fila = 1;
+    SELECT columnaA, columnaB, columnaC INTO POS_4, POS_5, POS_6 FROM TABLERO WHERE idPartida = idPartidaP AND fila = 2;
+    SELECT columnaA, columnaB, columnaC INTO POS_7, POS_8, POS_9 FROM TABLERO WHERE idPartida = idPartidaP AND fila = 3;
+
+    IF CONCAT(POS_1, POS_4, POS_7) = 'XXX' OR CONCAT(POS_2, POS_5, POS_8) = 'XXX' OR CONCAT(POS_3, POS_6, POS_9) = 'XXX' THEN
+            SET RESULTAT = 'GANADOR JUGADOR1';
+    ELSEIF CONCAT(POS_1, POS_4, POS_7) = 'OOO' OR CONCAT(POS_2, POS_5, POS_8) = 'OOO' OR CONCAT(POS_3, POS_6, POS_9) = 'OOO' THEN
+            SET RESULTAT = 'GANADOR JUGADOR2';
+    END IF;
+
+    # Diagonal
+    IF CONCAT(POS_1, POS_5, POS_9) = 'XXX' OR CONCAT(POS_7, POS_5, POS_3) = 'XXX' THEN
+            SET RESULTAT = 'GANADOR JUGADOR1';
+    ELSEIF CONCAT(POS_1, POS_5, POS_9) = 'OOO' OR CONCAT(POS_7, POS_5, POS_3) = 'OOO' THEN
+            SET RESULTAT = 'GANADOR JUGADOR2';
+    END IF;
+
     RETURN RESULTAT;
 
 END//

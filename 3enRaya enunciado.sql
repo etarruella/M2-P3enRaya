@@ -84,14 +84,14 @@ BEGIN
     SET P_ACT = OLD.idPartida;
     SELECT jugador1, jugador2 INTO J1, J2 FROM PARTIDA WHERE idPartida = P_ACT;
 
-    IF tablero_ganador(P_ACT) = 'GANADOR JUGADOR2' THEN
+    IF tablero_ganador(P_ACT) = 'GANADOR JUGADOR1' THEN
         UPDATE PARTIDA SET estado = tablero_ganador(P_ACT) WHERE PARTIDA.idPartida = P_ACT;
         UPDATE JUGADOR SET ganadas = ganadas + 1 WHERE loginJugador = J1;
-        UPDATE JUGADOR SET perdidas = predidas + 1 WHERE loginJugador = J2;
+        UPDATE JUGADOR SET perdidas = perdidas + 1 WHERE loginJugador = J2;
     ELSEIF tablero_ganador(P_ACT) = 'GANADOR JUGADOR2' THEN
         UPDATE PARTIDA SET estado = tablero_ganador(P_ACT) WHERE PARTIDA.idPartida = P_ACT;
         UPDATE JUGADOR SET ganadas = ganadas + 1 WHERE loginJugador = J2;
-        UPDATE JUGADOR SET perdidas = predidas + 1 WHERE loginJugador = J1;
+        UPDATE JUGADOR SET perdidas = perdidas + 1 WHERE loginJugador = J1;
     END IF;
 
     IF tablero_lleno(P_ACT) = 'CIERTO' AND tablero_ganador(P_ACT) = 'FALSO' THEN

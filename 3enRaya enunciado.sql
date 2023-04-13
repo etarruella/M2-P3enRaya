@@ -73,6 +73,36 @@ select tablero_ganador(3); # FALSO
 # Si no hay un ganador, y la funcion tablero_lleno retorna 'CIERTO', es que el tablero esta lleno, y no quedan casillas vacias para que los jugadores sigan haciendo movimientos. Entonces debe modificar el estado en la tabla PARTIDA con el valor 'EMPATE', y despues modificar en la tabla JUGADOR los jugadores de esa partida, incrementando el campo empatadas de ambos.
 #
 
+DROP TRIGGER IF EXISTS modificar_estado;
+DELIMITER //
+CREATE TRIGGER modificar_estado AFTER UPDATE ON TABLERO FOR EACH ROW
+BEGIN
+
+    DECLARE P_ACT INT;
+    DECLARE J1, J2 VARCHAR(50);
+
+    SET P_ACT = OLD.idPartida;
+    SELECT jugador1, jugador2 INTO J1, J2 FROM PARTIDA WHERE idPartida = P_ACT;
+
+    IF tablero_ganador(P_ACT) = 'GANADOR JUGADOR2' THEN
+        UPDATE PARTIDA SET estado = tablero_ganador(P_ACT) WHERE PARTIDA.idPartida = P_ACT;
+        UPDATE JUGADOR SET ganadas = ganadas + 1 WHERE loginJugador = J1;
+        UPDATE JUGADOR SET perdidas = predidas + 1 WHERE loginJugador = J2;
+    ELSEIF tablero_ganador(P_ACT) = 'GANADOR JUGADOR2' THEN
+        UPDATE PARTIDA SET estado = tablero_ganador(P_ACT) WHERE PARTIDA.idPartida = P_ACT;
+        UPDATE JUGADOR SET ganadas = ganadas + 1 WHERE loginJugador = J2;
+        UPDATE JUGADOR SET perdidas = predidas + 1 WHERE loginJugador = J1;
+    END IF;
+
+    IF tablero_lleno(P_ACT) = 'CIERTO' AND tablero_ganador(P_ACT) = 'FALSO' THEN
+        UPDATE PARTIDA SET estado = 'EMPATE' WHERE PARTIDA.idPartida = P_ACT;
+        UPDATE JUGADOR SET empatadas = empatadas + 1 WHERE loginJugador = J1;
+        UPDATE JUGADOR SET empatadas = empatadas + 1 WHERE loginJugador = J2;
+    END IF;
+
+END//
+DELIMITER ;
+
 # TEST modificar_estado
 # Partida 4 estado 'TURNO JUGADOR1', si mueve en A3 futuro 'EMPATE'
 call mostrar_tablero(4);

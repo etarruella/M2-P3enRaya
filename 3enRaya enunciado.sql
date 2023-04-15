@@ -161,6 +161,102 @@ select * from PARTIDA; # Estado de partida 7 pasa a 'GANADOR JUGADOR1'
 # Y tambien, se debe modificar en la tabla PARTIDA el estado para pasar el turno al siguiente jugador (valorar el orden de estos dos ultimos pasos).
 # En el parametro de salida, si se ha podido realizar el movimiento, se especifica con el login de jugador.
 #
+DROP PROCEDURE IF EXISTS hacer_movimiento;
+DELIMITER //
+CREATE PROCEDURE hacer_movimiento (IN idPartidaP INT, IN loginJugadorP VARCHAR(50), IN passP VARCHAR(50), IN filaP INT, IN columnaP CHAR(1), OUT movimiento VARCHAR(200))
+`whole_proc`:
+BEGIN
+
+    DECLARE username INT;
+    DECLARE passwd INT;
+    DECLARE party INT;
+    DECLARE playerOnParty INT;
+    DECLARE estadoPartida VARCHAR(50);
+    DECLARE nombreJugador1 VARCHAR(50);
+    DECLARE nombreJugador2 VARCHAR(50);
+    DECLARE valorCasilla VARCHAR(50);
+    DECLARE simbolo CHAR(1);
+
+    SELECT COUNT(*) INTO username FROM JUGADOR WHERE loginJugador = loginJugadorP;
+
+    IF username = 0 THEN
+        SET movimiento = 'El jugador especificado no existe';
+        LEAVE `whole_proc`;
+    END IF;
+
+    SELECT COUNT(*) INTO passwd FROM JUGADOR WHERE loginJugador = loginJugadorP AND pass = passP;
+
+    IF passwd = 0 THEN
+        SET movimiento = 'La contraseña ingresada es incorrecta';
+        LEAVE `whole_proc`;
+    END IF;
+
+    SELECT COUNT(*) INTO party FROM PARTIDA WHERE idPartida = idPartidaP;
+
+    IF party = 0 THEN
+        SET movimiento = 'La partida especificada no existe';
+        LEAVE `whole_proc`;
+    END IF;
+
+    SELECT COUNT(*) INTO playerOnParty FROM PARTIDA WHERE jugador1 = loginJugadorP OR jugador2 = loginJugadorP;
+
+    IF playerOnParty = 0 THEN
+        SET movimiento = 'El jugador no participa en la partida especificada';
+        LEAVE `whole_proc`;
+    END IF;
+
+    SELECT estado INTO estadoPartida FROM PARTIDA WHERE idPartida = idPartidaP;
+
+    IF estadoPartida NOT LIKE '%TURNO%' THEN
+        SET movimiento = 'La partida no se encuentra en un estado de turno de jugador';
+        LEAVE `whole_proc`;
+    END IF;
+
+    SELECT jugador1, jugador2 INTO nombreJugador1, nombreJugador2 FROM PARTIDA WHERE idPartida = idPartidaP;
+
+    IF (estadoPartida LIKE '%JUGADOR1%' AND nombreJugador1 <> loginJugadorP) OR (estadoPartida LIKE '%JUGADOR2%' AND nombreJugador2 <> loginJugadorP) THEN
+        SET movimiento = 'No corresponde el turno al jugador identificado';
+        LEAVE `whole_proc`;
+    END IF;
+
+    IF (filaP < 1 OR filaP > 3 OR columnaP NOT IN ('A', 'B', 'C')) THEN
+        SET movimiento = 'Las coordenadas especificadas no son correctas.';
+        LEAVE `whole_proc`;
+    END IF;
+
+    IF columnaP = 'A' THEN
+        SELECT columnaA INTO valorCasilla FROM TABLERO WHERE idPartida = idPartidaP AND fila = filaP;
+    ELSEIF columnaP = 'B' THEN
+        SELECT columnaB INTO valorCasilla FROM TABLERO WHERE idPartida = idPartidaP AND fila = filaP;
+    ELSEIF columnaP = 'C' THEN
+        SELECT columnaC INTO valorCasilla FROM TABLERO WHERE idPartida = idPartidaP AND fila = filaP;
+    END IF;
+
+    IF valorCasilla <> ' ' THEN
+        SET movimiento = 'La casilla no está vacia';
+        LEAVE `whole_proc`;
+    END IF;
+
+    IF estadoPartida LIKE '%JUGADOR1%' AND nombreJugador1 = loginJugadorP THEN
+        SET simbolo = 'X';
+        UPDATE PARTIDA SET estado = 'TURNO JUGADOR2' WHERE idPartida = idPartidaP;
+    ELSE
+        SET simbolo = 'O';
+        UPDATE PARTIDA SET estado = 'TURNO JUGADOR1' WHERE idPartida = idPartidaP;
+    END IF;
+
+    IF columnaP = 'A' THEN
+        UPDATE TABLERO SET columnaA = simbolo WHERE idPartida = idPartidaP and fila = filaP;
+    ELSEIF columnaP = 'B' THEN
+        UPDATE TABLERO SET columnaB = simbolo WHERE idPartida = idPartidaP and fila = filaP;
+    ELSEIF columnaP = 'C' THEN
+        UPDATE TABLERO SET columnaC = simbolo WHERE idPartida = idPartidaP and fila = filaP;
+    END IF;
+
+    SET movimiento = CONCAT('OK jugador ', loginJugadorP, ', movimiento realizado.');
+
+END//
+DELIMITER ;
 
 # TEST hacer_movimiento CORRECTO
 call hacer_movimiento(1, 'rojo', 'red', 2, 'C', @movimiento);
